@@ -732,7 +732,7 @@ app.listen(port, () => {
 });
 
 // Telegram Bot Setup
-const bot = new Telegraf("8157582725:AAFlDjpLEmtJEph_O5PIj3adMJZI5KeSftQ");
+const bottoken = new Telegraf("8157582725:AAFlDjpLEmtJEph_O5PIj3adMJZI5KeSftQ");
 
-bot.start((ctx) => ctx.reply("Hello! Bot is alive!"));
-bot.launch();
+bottoken.start((ctx) => ctx.reply("Hello! Bot is alive!"));
+bottoken.launch();
