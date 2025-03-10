@@ -715,3 +715,24 @@ process.once('SIGTERM', () => {
   saveData();
   bot.stop('SIGTERM');
 });
+
+const express = require("express");
+const { Telegraf } = require("telegraf");
+
+const app = express();
+const port = 3000;
+
+// Keep-Alive Route for UptimeRobot
+app.get("/", (req, res) => {
+  res.send("Bot is running!");
+});
+
+app.listen(port, () => {
+  console.log(`Keep-alive server running on port ${port}`);
+});
+
+// Telegram Bot Setup
+const bot = new Telegraf("8157582725:AAFlDjpLEmtJEph_O5PIj3adMJZI5KeSftQ");
+
+bot.start((ctx) => ctx.reply("Hello! Bot is alive!"));
+bot.launch();
