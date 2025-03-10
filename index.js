@@ -1,11 +1,15 @@
-// Import required packages
 const { Telegraf } = require('telegraf');
 const { v4: uuidv4 } = require('uuid');
 const axios = require('axios');
 const fs = require('fs');
 const path = require('path');
 const Tesseract = require('tesseract.js');
+const express = require('express'); // Added Express
 require('dotenv').config();
+
+// Initialize Express app
+const app = express();
+const PORT = process.env.PORT || 3000;
 
 // Initialize bot with your Telegram token (stored in .env file)
 const bot = new Telegraf(process.env.BOT_TOKEN);
@@ -700,8 +704,60 @@ bot.command('exportteam', async (ctx) => {
   fs.unlinkSync(filePath);
 });
 
-// Start the bot
-bot.launch();
+// Express routes
+
+// Health check endpoint for UptimeRobot
+app.get('/', (req, res) => {
+  res.send('Telegram Bot is running! Bot Status: Active');
+});
+
+// Additional status endpoint with more details
+app.get('/status', (req, res) => {
+  const statusData = {
+    status: 'online',
+    uptime: process.uptime(),
+    timestamp: new Date().toISOString(),
+    users: Object.keys(users).length,
+    teams: Object.keys(teams).length
+  };
+  
+  res.json(statusData);
+});
+
+// Start Express server and Telegram bot
+app.listen(PORT, () => {
+  console.log(`Express server is running on port ${PORT}`);
+  console.log('Starting Telegram bot...');
+  
+  // Start the bot in webhook mode (if using REPL environment)
+  if (process.env.REPLIT_DB_URL) {
+    const webhookDomain = process.env.REPL_SLUG 
+      ? `https://${process.env.REPL_SLUG}.${process.env.REPL_OWNER}.repl.co`
+      : null;
+    
+    if (webhookDomain) {
+      // Set webhook if domain is available
+      bot.telegram.setWebhook(`${webhookDomain}/bot${process.env.BOT_TOKEN}`)
+        .then(() => {
+          console.log(`Webhook set to ${webhookDomain}`);
+          
+          // Setup webhook endpoint
+          app.use(bot.webhookCallback(`/bot${process.env.BOT_TOKEN}`));
+        })
+        .catch(error => {
+          console.error('Error setting webhook:', error);
+          // Fall back to polling mode
+          bot.launch().then(() => console.log('Bot started in polling mode'));
+        });
+    } else {
+      // If no domain, use polling
+      bot.launch().then(() => console.log('Bot started in polling mode'));
+    }
+  } else {
+    // Non-Replit environment, use polling
+    bot.launch().then(() => console.log('Bot started in polling mode'));
+  }
+});
 
 // Enable graceful stop with data saving
 process.once('SIGINT', () => {
@@ -715,4 +771,3 @@ process.once('SIGTERM', () => {
   saveData();
   bot.stop('SIGTERM');
 });
-
