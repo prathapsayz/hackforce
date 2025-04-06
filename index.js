@@ -135,11 +135,11 @@ bot.command('register', (ctx) => {
   saveData();
   
   ctx.reply(
-    `Thanks for registering, ${users[userId].name}! 🎉\n\n` +
+    `Thanks for registering, ${users[userId].name}! 🎉\n\n` + 
     `Please add your skills with /skills to complete your profile.\n\n` +
     `You can optionally verify your Salesforce TDX25 Registration later using /verify.`
   );
-});
+}); 
 
 // Screenshot verification process
 bot.command('verify', (ctx) => {
@@ -154,7 +154,7 @@ bot.command('verify', (ctx) => {
   ctx.reply(
     `Please send a screenshot of your TDX25 event confirmation email. \n\n` +
     `Please Note:\n` +
-    `- Try to capture screenshot right from congratulations keyword. \n` +
+    `- Try to capture screenshot right from congratulations keyword. \n` + 
     `- Any issues? get in touch with @ArcForceBot for manual verification \n` +
     `The image will be analyzed to verify your Salesforce TDX Registration.\n\n` +
     `Note: Verification is optional but gives you a verification badge that may help you find teammates.`
@@ -176,7 +176,7 @@ bot.on('photo', async (ctx) => {
     
     // Download photo
     const response = await axios({
-      method: 'GET',
+      method: 'GET', 
       url: fileLink.href,
       responseType: 'stream'
     });
@@ -348,6 +348,7 @@ bot.command('viewprofile', (ctx) => {
 });
 
 // Find teammates based on complementary skills
+// Find teammates based on complementary skills - modified to show all matches
 bot.command('findteammates', (ctx) => {
   const userId = ctx.from.id;
   
@@ -363,45 +364,41 @@ bot.command('findteammates', (ctx) => {
   
   let matches = [];
   
-  // Find other users with complementary skills
+  // Find all other users
   Object.values(users).forEach(user => {
     if (user.id === userId) return; // Skip current user
-    
-    // Skip users already in a full team
-    if (user.teamId && teams[user.teamId].members.length >= teams[user.teamId].maxMembers) return;
     
     // Calculate complementary skills (skills the other user has that current user doesn't)
     const complementarySkills = user.skills.filter(skill => !currentUser.skills.includes(skill));
     
-    // Enhanced match score that includes verification bonus
+    // Calculate match score
     let matchScore = complementarySkills.length * 2;
     
     // Bonus points for verified users
     if (user.verified) matchScore += 3;
     
-    if (matchScore > 0) {
-      matches.push({
-        user,
-        complementarySkills,
-        matchScore
-      });
-    }
+    // Include all users, regardless of match score
+    matches.push({
+      user,
+      complementarySkills,
+      matchScore,
+      skillMatchCount: complementarySkills.length
+    });
   });
   
   // Sort matches by score (highest first)
   matches.sort((a, b) => b.matchScore - a.matchScore);
   
   if (matches.length === 0) {
-    return ctx.reply('No matching teammates found. Try updating your skills!');
+    return ctx.reply('No potential teammates found. Please wait for more users to register.');
   }
   
-  // Display top 5 matches
-  let response = 'Top teammate matches for you:\n\n';
+  // Display all matches
+  let response = 'Potential teammates for you:\n\n';
   
-  matches.slice(0, 5).forEach((match, index) => {
+  matches.forEach((match, index) => {
     response += `${index + 1}. ${match.user.name} (@${match.user.username}) ${match.user.verified ? '✅' : ''}\n`;
-    response += `   Match score: ${match.matchScore}\n`;
-    response += `   Complementary skills: ${match.complementarySkills.join(', ')}\n`;
+    response += `   Skill match score: ${match.skillMatchCount}\n`;
     
     if (match.user.teamId) {
       response += `   Team: ${teams[match.user.teamId].name}\n`;
